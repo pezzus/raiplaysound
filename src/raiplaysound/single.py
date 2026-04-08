@@ -160,9 +160,15 @@ class RaiParser:
                 },
                 f"{NSITUNES}title": fitem.title,
                 f"{NSITUNES}summary": fitem.content,
-                f"{NSITUNES}duration": item["audio"]["duration"],
                 "image": {"url": urljoin(self.url, item["image"])},
             }
+            duration = (
+                item["audio"].get("duration")
+                or item.get("duration_small_format")
+                or item.get("literal_duration")
+            )
+            if duration:
+                fitem._data[f"{NSITUNES}duration"] = duration
             if item.get("downloadable_audio", None) and item["downloadable_audio"].get("url", None):
                 fitem._data["enclosure"]["@url"] = urljoin(
                     self.url, item["downloadable_audio"]["url"]
@@ -233,9 +239,6 @@ class RaiParser:
         if typology in self.skip:
             self.log(f"Skipped: {self.url} ({typology})")
             return []
-        for tab in rdata["tab_menu"]:
-            if tab["content_type"] == "playlist":
-                self.extend(tab["weblink"])
         feed = Feed()
         self._json_to_feed(feed, rdata)
         if not feed.items and not self.inner:

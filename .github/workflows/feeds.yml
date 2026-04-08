@@ -1,0 +1,50 @@
+name: Generate RSS
+
+on:
+  push:
+    branches:
+      - master
+  schedule:
+    - cron: '0 12 * * 1-5'
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: python
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+
+      - name: Generate feed
+        run: |
+          mkdir feeds
+          uvx --from git+https://github.com/pezzus/raiplaysound.git raiplaysound \
+            single https://www.raiplaysound.it/programmi/radio3scienza \
+            --dateok --skip playlist --folder feeds
+          chmod 644 feeds/*
+
+      - name: Upload feed
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: "feeds/"
+
+  deploy:
+    needs: build
+
+    permissions:
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    runs-on: ubuntu-latest
+    steps:
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v4
