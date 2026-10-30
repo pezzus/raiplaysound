@@ -14,17 +14,21 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v8.0.0
+        uses: astral-sh/setup-uv@11f9893b081a58869d3b5fccaea48c9e9e46f990 # v8.3.2
+
+      - name: Install dependencies
+        run: uv sync --locked --no-dev
 
       - name: Generate feed
         run: |
-          mkdir feeds
-          uvx --from git+https://github.com/pezzus/raiplaysound.git raiplaysound \
+          mkdir -p feeds
+          uv run --locked --no-dev raiplaysound \
             single https://www.raiplaysound.it/programmi/radio3scienza \
             --dateok --skip playlist --folder feeds
+          test -s feeds/radio3scienza.xml
           chmod 644 feeds/*
 
       - name: Upload feed
